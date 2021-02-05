@@ -5,9 +5,7 @@ class Algorithm:
 
     def compute(self):       
         # Adding elements to the queue
-        movements.append("L10")
-        movements.append("S5")
-        movements.append("R6")
+        movements=['U', 'R', 'R', 'R', 'R', 'R', 'U', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'U', 'U', 'U', 'U', 'L', 'L', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'R', 'R', 'U', 'U']
 
     def getmovements(self):
         return movements
