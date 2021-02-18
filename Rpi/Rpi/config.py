@@ -1,0 +1,9 @@
+#Wifi Connection settings
+WIFI_IP = "192.168.22.1"
+
+#Android BT Connection settings
+PORT = 1
+RPI_MAC = "B8:27:EB:AD:53:7C"
+GALAXY_MAC = "CC:46:4E:E1:CE:9F"
+UUID = '00001101-0000-1000-8000-00805F9B34FB'
+#UUID = "163660a6-ad17-44fc-99c5-5c75e78ad815"
