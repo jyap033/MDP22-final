@@ -11,24 +11,43 @@ an.connect()
 #Connect to Arduino
 ar = Arduino()
 
-ar.send("L")
+#Connect to Server
+s = Socket()
+
+
+
 while True:
+    an.send("Ard|And|fwd|")
     r = an.recv()
-    tempMsg = str(r).split("'")
-    if(tempMsg[1].strip() == ''):
+    tempMsg = str(r).split("'")[1].strip()
+    #Left Turn
+    if(tempMsg == "And|Ard|a|"):
+        ar.send("L")
+    #Right Turn
+    if(tempMsg == "And|Ard|d|"):
+        ar.send("R")
+    #Go Straight
+    if(tempMsg == "And|Ard|w|"):
+        ar.send("S")
+    #Go Backwards
+    if(tempMsg == "And|Ard|b|"):
+        ar.send("B")
+    #Calibrate
+    if(tempMsg == "And|Alg|C|"):
+        s.start()
+        s.send("start")
+        ar.send("C")
+    #Start
+    if(tempMsg == "And|Alg|FP_START|"):
+        for movement in s.getmovements():
+            ar.send(movement)
+            
+        
+    if(tempMsg == ''):
         # send message
         sendMsg = input("Type here : ")
-        an.send(sendMsg)
+        
 
-#Connect to Server
-#s = Socket()
-#s.start()
-#s.send("start")
 
-#Read from Server
-#ard = ArduinoManager
-#for movement in s.getmovements():
-#    ard.send(movement)
-#    print(movement)
-#    time.sleep(300)
+
     

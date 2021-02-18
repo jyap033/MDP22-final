@@ -3,7 +3,7 @@ import time
 HEADER = 64
 PORT = 5050
 FORMAT = 'utf-8'
-SERVER = "192.168.22.6"
+SERVER = "192.168.10.102"
 ADDR = (SERVER, PORT)
 
 movements = []
