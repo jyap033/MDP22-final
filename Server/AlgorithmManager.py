@@ -23,7 +23,7 @@ class AlgorithmManager:
         print(movements)
         new_mov=sol.process_mov(movements)
         print(new_mov)
-        return new_mov
+        return movements
 hex=hex="000000000000010042038400000000000000030C000000000000021F8400080000000000040"
 waypoint=[3,2]
 sol=AlgorithmManager()
