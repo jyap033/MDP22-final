@@ -25,8 +25,8 @@ class AlgorithmManager:
         sol.process2(new_mov)
         new_mov=sol.process3(new_mov)
         return movements
-hex=hex="000000000000010042038400000000000000030C000000000000021F8400080000000000040"
-waypoint=[3,2]
+hex="0700000000000001C00002000400080010202040408001000200040000380000000020004200"
+waypoint=[2,3]
 sol=AlgorithmManager()
 movs=sol.compute(hex,waypoint)
 print(movs)
