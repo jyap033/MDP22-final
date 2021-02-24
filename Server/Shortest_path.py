@@ -181,25 +181,15 @@ class A_star:
             else:
                 count+=1
         return res
+     def process2(self, movs):
+        for i in range(len(movs)):
+            if movs[i]=="Reverse1":
+                movs[i]="R2"
 
-sol=A_star()
-hex="000000000000010042038400000000000000030C000000000000021F8400080000000000040"
-p1,p2,dir=sol.get_path(hex,[3,2])
-path=p1+p2[1:]
-print(path)
-
-for i in range(len(dir)):
-    if dir[i]=="N":
-        dir[i]="S"
-    elif dir[i]=="S":       
-        dir[i]="N"
-    else:
-        continue
-pre=Preprocess_Map()
-mat=pre.generate_path(hex,path)
-for i in mat:
-    print(i)
-movements=sol.process_directions(dir)
-print(movements)
-new_mov=sol.process_mov(movements)
-print(new_mov)
+    def process3(self, movs):
+        res=[]
+        for item in movs:
+            temp=[item[0]]*int(item[1:])
+            res+=temp
+        return res
+        
