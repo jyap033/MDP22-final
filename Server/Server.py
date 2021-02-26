@@ -1,7 +1,7 @@
 import socket 
 import threading
 import time
-from AlgorithmManager import Algorithm
+from AlgorithmManager import AlgorithmManager
 HEADER = 64
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -14,7 +14,7 @@ print(server)
 print(ADDR)
 server.bind(ADDR)
 
-a = Algorithm()
+
 
 
 def handle_client(conn, addr):
@@ -30,11 +30,19 @@ def handle_client(conn, addr):
             if msg == DISCONNECT_MESSAGE:
                 connected = False
 
-            if msg == "start": 
-                a.compute()   
-                for row in a.getmovements():
+            if msg == "start":
+                print("calibrating")
+                a=AlgorithmManager()
+                waypoint=[2,3]
+                hex="0700000000000001C00002000400080010202040408001000200040000380000000020004200"
+
+                movs=a.compute(hex,waypoint)   
+                for row in movs:
                     conn.send(row.encode(FORMAT))
+                    print(row)
                     time.sleep(0.001)
+
+                print("done")
             #conn.send("Msg received".encode(FORMAT))
            
             conn.send("done".encode(FORMAT))

@@ -181,7 +181,7 @@ class A_star:
             else:
                 count+=1
         return res
-     def process2(self, movs):
+    def process2(self, movs):
         for i in range(len(movs)):
             if movs[i]=="Reverse1":
                 movs[i]="R2"
