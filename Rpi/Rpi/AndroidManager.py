@@ -12,8 +12,6 @@ class Android:
         self.server_sock.listen(currentPort)
         print(currentPort)
         
-        #find_service( name = None, uuid = None, bdaddr = None)
-
         bt.advertise_service(
             self.server_sock,
             'MDPGrp22',
@@ -22,6 +20,7 @@ class Android:
             profiles=[bt.SERIAL_PORT_PROFILE]
         )
         print('server socket:', str(self.server_sock))
+        print('client socket:', str(self.client_sock))
         
     def connect(self):
         while True:
@@ -34,6 +33,12 @@ class Android:
                     self.client_sock, address = self.server_sock.accept()
                     print('Accepted connection from Android at: ' + str(address))
                     retry = False
+                
+#                 elif self.client_sock is not None:
+#                     self.client_sock, address = self.server_sock.accept()
+#                     print('Accepted connection from Android at: ' + str(address))
+#                     retry = False
+        
                     
             except Exception as e:
                 print("Connection with Android failed: " + str(e))
@@ -84,7 +89,6 @@ class Android:
         except Exception as e:
             print("Failed to send to Android: " + str(e))
             raise e
-                
-
-
-    
+            
+# an = Android()
+# an.connect()
