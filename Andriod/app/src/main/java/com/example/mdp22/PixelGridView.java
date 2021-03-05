@@ -400,7 +400,7 @@ public class PixelGridView extends View {
                 String startCoord = "Start Point: ".concat(Integer.toString(this.getStartCoord()[0])).concat(",").concat(Integer.toString(this.getStartCoord()[1]));
                 Log.d(TAG, "Start Point: " + Integer.toString(this.getStartCoord()[0]) + "," + Integer.toString(this.getStartCoord()[1]));
                 byte[] bytes = startCoord.getBytes(Charset.defaultCharset());
-                BluetoothChat.writeMsg(bytes);
+                BluetoothConnectionService.write(bytes);
                 invalidate();
 
             } else if (selectWayPoint) {
@@ -412,7 +412,7 @@ public class PixelGridView extends View {
                 String waypointCoordinate = "And|Alg|Waypoint: ".concat(Integer.toString(this.getWayPoint()[0])).concat(",").concat(Integer.toString(this.getWayPoint()[1]));
                 Log.d(TAG, "Waypoint: " + Integer.toString(this.getWayPoint()[0]).concat(",").concat(Integer.toString(this.getWayPoint()[1])));
                 byte[] bytes = waypointCoordinate.getBytes(Charset.defaultCharset());
-                BluetoothChat.writeMsg(bytes);
+                BluetoothConnectionService.write(bytes);
                 invalidate();
             }
         } else if (event.getAction() == MotionEvent.ACTION_MOVE){

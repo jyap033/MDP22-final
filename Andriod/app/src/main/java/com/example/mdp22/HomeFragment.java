@@ -12,6 +12,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,7 +21,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -42,9 +42,9 @@ public class HomeFragment extends Fragment implements SensorEventListener{
 
     // Declarations for main screen with map
     PixelGridView mPGV;
-    ImageButton forwardButton, leftRotateButton, rightRotateButton, reverseButton;
+    ImageButton forwardButton, leftRotateButton, rightRotateButton, reverseButton, backwardButton;
     Button btn_update, btn_sendToAlgo, btn_calibrate;
-    TextView tv_status, tv_map_exploration, tv_mystatus, tv_mystringcmd;
+    TextView tv_status, tv_map_exploration, tv_mystatus, tv_mystringcmd , tv_waypoint;
     ToggleButton tb_setWaypointCoord, tb_setStartCoord, tb_autoManual, tb_fastestpath, tb_exploration,tiltbtn;
     ArrayList<String> commandBuffer = new ArrayList<String>();
 
@@ -60,7 +60,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
     boolean connectedState;
     boolean currentActivity;
 
-    com.example.mdp26.BluetoothConnectionService bc;
+
 
     @Nullable
     @Override
@@ -75,16 +75,16 @@ public class HomeFragment extends Fragment implements SensorEventListener{
     {
         super.onViewCreated(view, savedInstanceState);
 
-        connectedDevice = null;
+        connectedDevice = null; //Testing purpose
         connectedState = false;
         currentActivity = true;
 
-        bc = new com.example.mdp26.BluetoothConnectionService(getContext());
         // Register Broadcast Receiver for incoming bluetooth connection
         getActivity().registerReceiver(btConnectionReceiver, new IntentFilter("ConnectionStatus"));
 
         // Register Broadcast Receiver for incoming bluetooth message
         getActivity().registerReceiver(incomingMessageReceiver, new IntentFilter("incomingMessage"));
+        tv_waypoint = (TextView) getActivity().findViewById(R.id.cur_pointing_posi);
 
         tv_status = (TextView) getActivity().findViewById(R.id.tv_status);
         tv_map_exploration = (TextView) getActivity().findViewById(R.id.tv_map_exploration);
@@ -128,11 +128,35 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     // Outgoing message to Arduino to move forward
                     String navigate = "And|Ard|w|";
                     byte[] bytes = navigate.getBytes(Charset.defaultCharset());
-                    bc.write(bytes);
+                    BluetoothConnectionService.write(bytes);
                     Log.d(TAG, "Android Controller: Move Forward sent");
-                    tv_mystatus.append("Moving\n");
+                    tv_mystatus.append("Moving Forward\n");
                     tv_mystringcmd.append("Android Controller: Move Forward\n");
                     mPGV.moveForward();
+                }
+            }
+        });
+
+        // Backward button
+        backwardButton = (ImageButton) getActivity().findViewById(R.id.bwd_btn);
+        backwardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                // Check BT connection If not connected to any bluetooth device
+                if (connectedDevice == null) {
+                    Toast.makeText(getContext(), "Please connect to bluetooth device first!", Toast.LENGTH_SHORT).show();
+                } else {
+
+                    // If already connected to a bluetooth device
+                    // Outgoing message to Arduino to move backwards
+                    String navigate = "And|Ard|b|";
+                    byte[] bytes = navigate.getBytes(Charset.defaultCharset());
+                    BluetoothConnectionService.write(bytes);
+                    Log.d(TAG, "Android Controller: Move Backwards sent");
+                    tv_mystatus.append("Moving Backwards\n");
+                    tv_mystringcmd.append("Android Controller: Move Backwards\n");
+                    mPGV.moveBackwards();
                 }
             }
         });
@@ -152,9 +176,9 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     // Outgoing message to Arduino to turn left
                     String navigate = "And|Ard|a|";
                     byte[] bytes = navigate.getBytes(Charset.defaultCharset());
-                    bc.write(bytes);
+                    BluetoothConnectionService.write(bytes);
                     Log.d(TAG, "Android Controller: Turn Left sent");
-                    tv_mystatus.append("Moving\n");
+                    tv_mystatus.append("Turning Left\n");
                     tv_mystringcmd.append("Android Controller: Turn Left\n");
                     mPGV.rotateLeft();
                 }
@@ -176,9 +200,9 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     // Outgoing message to Arduino to turn right
                     String navigate = "And|Ard|d|";
                     byte[] bytes = navigate.getBytes(Charset.defaultCharset());
-                    bc.write(bytes);
+                    BluetoothConnectionService.write(bytes);
                     Log.d(TAG, "Android Controller: Turn Right sent");
-                    tv_mystatus.append("Moving\n");
+                    tv_mystatus.append("Turning Right\n");
                     tv_mystringcmd.append("Android Controller: Turn Right\n");
                     mPGV.rotateRight();
                 }
@@ -200,9 +224,9 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     // Outgoing message to Arduino to move backwards
                     String navigate = "And|Ard|s|";
                     byte[] bytes = navigate.getBytes(Charset.defaultCharset());
-                    bc.write(bytes);
+                    BluetoothConnectionService.write(bytes);
                     Log.d(TAG, "Android Controller: Move Backwards sent");
-                    tv_mystatus.append("Moving\n");
+                    tv_mystatus.append("Rotating Backwards\n");
                     tv_mystringcmd.append("Android Controller: Rotate 180 \n");
                     mPGV.moveBackwards();
                 }
@@ -221,6 +245,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
 
                     if (isChecked) {
                         // The toggle is enabled : To select waypoint on map
+                        startCounting();
                         mPGV.selectWayPoint();
                         tb_setWaypointCoord.toggle();
                     }
@@ -263,7 +288,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     int convertDirection = mPGV.getRobotDirection();
                     String sendAlgoCoord = "And|Alg|10|".concat(Integer.toString(mPGV.getStartCoord()[0])).concat(",").concat(Integer.toString(mPGV.getStartCoord()[1])).concat(",").concat(Integer.toString(convertDirection)).concat(",").concat(Integer.toString(mPGV.getWayPoint()[0])).concat(",").concat(Integer.toString(mPGV.getWayPoint()[1]));
                     byte[] bytes = sendAlgoCoord.getBytes(Charset.defaultCharset());
-                    bc.write(bytes);
+                    BluetoothConnectionService.write(bytes);
                     Log.d(TAG, "Sent Start and Waypoint Coordinates to Algo");
                     Toast.makeText(getContext(), "Start & Waypoint coordinates sent", Toast.LENGTH_SHORT).show();
                 }
@@ -284,7 +309,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     // Outgoing message to Algorithm to calibrate robot
                     String navigate = "And|Alg|C|";
                     byte[] bytes = navigate.getBytes(Charset.defaultCharset());
-                    bc.write(bytes);
+                    BluetoothConnectionService.write(bytes);
                     Log.d(TAG, "Android Controller: Calibrate sent");
 
                     tv_mystatus.append("Calibrating robot...\n");
@@ -302,34 +327,56 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     Toast.makeText(getContext(), "Please connect to bluetooth device first!", Toast.LENGTH_SHORT).show();
                 } else {
                     if (isChecked) {
-                        // The toggle is enabled; Manual Mode
+                        // The toggle is enabled; Auto Mode
 
                         // Direction buttons are disabled
                         // Update button is enabled
-                        btn_update.setEnabled(true);
+                        mPGV.refreshMap(true);
+
+                        btn_update.setEnabled(false);
                         forwardButton.setEnabled(false);
                         leftRotateButton.setEnabled(false);
                         rightRotateButton.setEnabled(false);
                         reverseButton.setEnabled(false);
-                        Toast.makeText(getContext(), "Manual Mode enabled", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Auto Mode enabled", Toast.LENGTH_SHORT).show();
 //                        updateMap = false;
-                        mPGV.setAutoUpdate(false);
-                        Log.d(TAG, "Auto updates disabled.");
+                        mPGV.setAutoUpdate(true);
+                        Log.d(TAG, "Auto updates enabled.");
+
+//                        btn_update.setEnabled(true);
+//                        forwardButton.setEnabled(false);
+//                        leftRotateButton.setEnabled(false);
+//                        rightRotateButton.setEnabled(false);
+//                        reverseButton.setEnabled(false);
+//                        Toast.makeText(getContext(), "Auto Mode enabled", Toast.LENGTH_SHORT).show();
+////                        updateMap = false;
+//                        mPGV.setAutoUpdate(false);
+//                        Log.d(TAG, "Auto updates disabled.");
 
                     } else {
-                        // The toggle is disabled; Auto Mode
+                        // The toggle is disabled; Manual Mode
 
                         // Update button is disabled
                         // Direction buttons are enabled
-                        mPGV.refreshMap(true);
-                        btn_update.setEnabled(false);
+
+                        btn_update.setEnabled(true);
                         forwardButton.setEnabled(true);
                         leftRotateButton.setEnabled(true);
                         rightRotateButton.setEnabled(true);
                         reverseButton.setEnabled(true);
-                        Toast.makeText(getContext(), "Auto Mode enabled", Toast.LENGTH_SHORT).show();
-                        mPGV.setAutoUpdate(true);
-                        Log.d(TAG, "Auto updates enabled.");
+                        Toast.makeText(getContext(), "Manual Mode enabled", Toast.LENGTH_SHORT).show();
+                        mPGV.setAutoUpdate(false);
+                        Log.d(TAG, "Manual updates enabled.");
+
+//                        mPGV.refreshMap(true);
+//                        btn_update.setEnabled(false);
+//                        forwardButton.setEnabled(true);
+//                        leftRotateButton.setEnabled(true);
+//                        rightRotateButton.setEnabled(true);
+//                        reverseButton.setEnabled(true);
+//                        Toast.makeText(getContext(), "Manual Mode enabled", Toast.LENGTH_SHORT).show();
+//                        mPGV.setAutoUpdate(true);
+//                        Log.d(TAG, "Auto updates enabled.");
                     }
                 }
             }
@@ -388,9 +435,6 @@ public class HomeFragment extends Fragment implements SensorEventListener{
             }
         });
 
-
-
-
     }
 
 
@@ -398,7 +442,6 @@ public class HomeFragment extends Fragment implements SensorEventListener{
     BroadcastReceiver incomingMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-
             String allMsg = intent.getStringExtra("receivedMessage");
 
             Log.d(TAG, "Receiving incoming message: " + allMsg);
@@ -408,11 +451,11 @@ public class HomeFragment extends Fragment implements SensorEventListener{
             // Add incoming commands into a buffer to process
             commandBuffer.add(allMsg);
 
-            // String incomingMsg = "Alg|And|rp|0|0|north";
+           // String incomingMsg = "Alg|And|rp|0|0|north";
             //String incomingMsg2= "Alg|And|rp|0|0|north";
             while(!commandBuffer.isEmpty()){
 
-                String incomingMsg = commandBuffer.remove(0);
+                 String incomingMsg = commandBuffer.remove(0);
                  /*if(!commandBuffer.isEmpty()) {
                      incomingMsg2 = commandBuffer.get(0);
                  }*/
@@ -455,6 +498,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                                         tv_mystatus.append("Moving\n");
                                     }
                                     break;
+
 
 
                                 // Command: MOVE BACKWARDS
@@ -523,7 +567,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                                     tv_mystringcmd.append(" \n");
                                     break;
 
-                                // For robot position in exploration stage
+                                    // For robot position in exploration stage
                                 case "rp":
                                     int robotPosCol = Integer.parseInt(filteredMsg[4]);
                                     int robotPosRow = Integer.parseInt(filteredMsg[3]);
@@ -531,7 +575,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
 
                                     int robotPosDir = 0;
                                     Log.d(TAG, "filteredMsg[5]: " + filteredMsg[5]);
-                                    // Up
+                                         // Up
                                     if (filteredMsg[5].equals("north"))
                                         robotPosDir = 0;
                                         //Right
@@ -549,7 +593,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                                     mPGV.setRobotDirection(robotPosDir);
                                     break;
 
-                                //For robot position in Fastest Path Stage
+                                    //For robot position in Fastest Path Stage
                                 case "fp":
                                     int robotPosDir2 = 0;
                                     Log.d(TAG, "filteredMsg[4]: " + filteredMsg[4]);
@@ -573,7 +617,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                                     }
                                     break;
 
-                                // Default case; string not recognised
+                                    // Default case; string not recognised
                                 default:
                                     Log.d(TAG, "String command not recognised.");
                                     break;
@@ -709,7 +753,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                                             mPGV.setCurPos(robotPosRow, robotPosCol);
                                             mPGV.setRobotDirection(robotPosDir);
                                             break;
-                                        //For robot position in fastest path stage
+                                            //For robot position in fastest path stage
                                         case "fp":
                                             int robotPosDir2 = 0;
                                             Log.d(TAG, "filteredMsg[4]: " + filteredMsg[4]);
@@ -733,7 +777,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                                                 mPGV.moveForward();
                                             }
                                             break;
-                                        // Default case: string not recognised
+                                            // Default case: string not recognised
                                         default:
                                             Log.d(TAG, "String command not recognised.");
                                             break;
@@ -752,10 +796,14 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                 // The following is for clearing checklist commands only.
 
                 // For receiving AMD robotPosition and grid
-                /*if (incomingMsg.substring(0, 1).equals("{")) {
+               if (incomingMsg.substring(0, 1).equals("{")) {
                     Log.d(TAG, "Incoming Message from AMD: " + incomingMsg);
                     String[] filteredMsg = msgDelimiter(incomingMsg.replaceAll(" ", "").replaceAll(",", "\\|").replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("\\:", "\\|").replaceAll("\"", "").replaceAll("\\[", "").replaceAll("\\]", "").trim(), "\\|");
-                    Log.d(TAG, "filteredMsg: " + filteredMsg);
+                    for (String i : filteredMsg){
+                        Log.d(TAG, "filteredMsg: " + i);
+
+                    }
+                    Log.d(TAG, "filteredMsg: " + filteredMsg.toString());
 
                     // AMD Robot Position
                     if (filteredMsg[0].equals("robotposition")) {
@@ -765,19 +813,19 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                         int robotPosDir = 0;
                         Log.d(TAG, "filteredMsg[3]: " + filteredMsg[3]);
                         // Up
-                        if (filteredMsg[3].equals("north"))
+                        if (filteredMsg[3].equals('0'))
                             robotPosDir = 0;
                             //Right
-                        else if (filteredMsg[3].equals("east"))
+                        else if (filteredMsg[3].equals("90"))
                             robotPosDir = 3;
                             //Down
-                        else if (filteredMsg[3].equals("south"))
+                        else if (filteredMsg[3].equals("180"))
                             robotPosDir = 2;
                             // Left
-                        else if (filteredMsg[3].equals("west"))
+                        else if (filteredMsg[3].equals("270"))
                             robotPosDir = 1;
                         // For setting robot start position from AMD
-                        mPGV.setCurPos(robotPosRow, robotPosCol);
+                        mPGV.setCurPos((19-(robotPosCol+1)), robotPosRow+1);
                         mPGV.setRobotDirection(robotPosDir);
                     }
 
@@ -791,7 +839,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                         // For setting up map from received AMD MDF String, use mdAMD
                         Log.d(TAG, "Processing mdAMD...");
                     }
-                }*/
+                }
             }
 
         }
@@ -823,6 +871,8 @@ public class HomeFragment extends Fragment implements SensorEventListener{
         }
     };
 
+
+
     // Setting Start Point Direction
     public void setStartDirection() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -843,7 +893,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
         Toast.makeText(getContext(), "Exploration started", Toast.LENGTH_SHORT).show();
         String startExp = "And|Alg|EX_START|";
         byte[] bytes = startExp.getBytes(Charset.defaultCharset());
-        bc.write(bytes);
+        BluetoothConnectionService.write(bytes);
         Log.d(TAG, "Android Controller: Start Exploration");
         tv_mystringcmd.append("Start Exploration\n");
         tv_mystatus.append("Moving\n");
@@ -862,7 +912,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
         Toast.makeText(getContext(), "Fastest Path started", Toast.LENGTH_SHORT).show();
         String startFP = "And|Alg|FP_START|";
         byte[] bytes = startFP.getBytes(Charset.defaultCharset());
-        bc.write(bytes);
+        BluetoothConnectionService.write(bytes);
         Log.d(TAG, "Android Controller: Start Fastest Path");
         tv_mystringcmd.append("Start Fastest Path\n");
         tv_mystatus.append("Moving\n");
@@ -888,22 +938,50 @@ public class HomeFragment extends Fragment implements SensorEventListener{
 
     // onClickListener for Tilt Button
 
-
+    int delay =0;
     @Override
     public void onSensorChanged(SensorEvent event) {
+
+        delay++;
+
         float x = event.values[0];
         float y = event.values[1];
 
         // Check if Tilt Control activated
-        if (tiltNavi == true) {
+        if (x<0.2 & x>=-0.24  & y >-0.2 & y<=0.2 ){
+            return;
+        }
+        if (tiltNavi  & delay > 20) {
+            delay =0;
             if (abs(x) > abs(y)) {
 
                 // Right Tilt
                 if (x < 0) {
                     Log.d("MainActivity:", "RIGHT TILT!!");
                     tv_mystatus.append("Moving\n");
-                    tv_mystringcmd.append("Android Controller: Turn Right\n");
+                    tv_mystringcmd.append("Android Controller: Turn Right\n" );
+
                     mPGV.rotateRight();
+
+//                    int dir = mPGV.getRobotDirection();
+//
+//                    switch(dir){
+//                        case 0:
+//                            mPGV.rotateRight();
+//                            break;
+//                        case 1:
+//                            mPGV.rotateRight();
+//                            mPGV.rotateRight();
+//                            break;
+//                        case 2:
+//                            mPGV.rotateLeft();
+//                            break;
+//                        case 3:
+//                            break;
+//                        default:
+//                            break;
+//                    }
+
                 }
 
                 // Left Tilt
@@ -912,6 +990,8 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     tv_mystatus.append("Moving\n");
                     tv_mystringcmd.append("Android Controller: Turn Left\n");
                     mPGV.rotateLeft();
+
+
                 }
             }
 
@@ -922,6 +1002,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     tv_mystatus.append("Moving\n");
                     tv_mystringcmd.append("Android Controller: Move Forward\n");
                     mPGV.moveForward();
+
                 }
 
                 // Backward Tilt
@@ -930,6 +1011,7 @@ public class HomeFragment extends Fragment implements SensorEventListener{
                     tv_mystatus.append("Moving\n");
                     tv_mystringcmd.append("Android Controller: Move Backwards\n");
                     mPGV.moveBackwards();
+
                 }
             }
         }
@@ -952,5 +1034,19 @@ public class HomeFragment extends Fragment implements SensorEventListener{
         sensorManager.unregisterListener(this);
     }
 
+    private Handler handler = new Handler();
 
+    private void startCounting() {
+        handler.post(run);
+    }
+
+    private Runnable run = new Runnable() {
+        @Override
+        public void run() {
+
+            tv_waypoint.setText(mPGV.getWayPointString());
+            handler.postDelayed(this, 100);
+
+        }
+    };
 }

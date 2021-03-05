@@ -136,7 +136,7 @@ public class MessagesFragment extends Fragment {
 
                 String tempF1 = myPrefs.getString(F1, "");
                 byte[] bytes = tempF1.getBytes(Charset.defaultCharset());
-                com.example.mdp26.BluetoothConnectionService.write(bytes);
+                BluetoothConnectionService.write(bytes);
 
                 Log.d(TAG, "Outgoing F1 string command: " + tempF1);
 
@@ -155,7 +155,7 @@ public class MessagesFragment extends Fragment {
 
                 String tempF2 = myPrefs.getString(F2, "");
                 byte[] bytes = tempF2.getBytes(Charset.defaultCharset());
-                com.example.mdp26.BluetoothConnectionService.write(bytes);
+                BluetoothConnectionService.write(bytes);
 
                 Log.d(TAG, "Outgoing F2 string command: " + tempF2);
 

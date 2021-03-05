@@ -74,7 +74,7 @@ public class BluetoothFragment extends Fragment{
     String connStatus;
     ProgressDialog myDialog;
 
-    com.example.mdp26.BluetoothConnectionService mBluetoothConnection;
+    BluetoothConnectionService mBluetoothConnection;
     // UUID
     private static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     public static BluetoothDevice mBTDevice;
@@ -87,7 +87,7 @@ public class BluetoothFragment extends Fragment{
         public void run() {
             // Magic here
             try {
-                if (com.example.mdp26.BluetoothConnectionService.BluetoothConnectionStatus == false) {
+                if (BluetoothConnectionService.BluetoothConnectionStatus == false) {
                     startBTConnection(mBTDevice, myUUID);
                     Toast.makeText(getContext(), "Reconnection Success", Toast.LENGTH_SHORT).show();
 
@@ -152,7 +152,7 @@ public class BluetoothFragment extends Fragment{
                     Log.d(TAG, "onItemClick: Initiating pairing with " + deviceName);
                     mNewBTDevices.get(i).createBond();
 
-                    mBluetoothConnection = new com.example.mdp26.BluetoothConnectionService(getActivity());
+                    mBluetoothConnection = new BluetoothConnectionService(getActivity());
                     mBTDevice = mNewBTDevices.get(i);
                 }
             }
@@ -170,7 +170,7 @@ public class BluetoothFragment extends Fragment{
                 Log.d(TAG, "onItemClick: DEVICE NAME: " + deviceName);
                 Log.d(TAG, "onItemClick: DEVICE ADDRESS: " + deviceAddress);
 
-                mBluetoothConnection = new com.example.mdp26.BluetoothConnectionService(getActivity());
+                mBluetoothConnection = new BluetoothConnectionService(getActivity());
                 mBTDevice = mPairedBTDevices.get(i);
             }
         });
@@ -187,9 +187,9 @@ public class BluetoothFragment extends Fragment{
                 //messageReceivedTextView.setText(sharedPreferences.getString("message", ""));
                 sendMessage.setText("");
 
-                if (com.example.mdp26.BluetoothConnectionService.BluetoothConnectionStatus == true) {
+                if (BluetoothConnectionService.BluetoothConnectionStatus == true) {
                     byte[] bytes = sentText.getBytes(Charset.defaultCharset());
-                    com.example.mdp26.BluetoothConnectionService.write(bytes);
+                    BluetoothConnectionService.write(bytes);
                 }
             }
         });
@@ -402,7 +402,7 @@ public class BluetoothFragment extends Fragment{
             else if(status.equals("disconnected") && retryConnection == false){
                 Log.d(TAG, "mBroadcastReceiver5: Disconnected from "+mDevice.getName());
                 Toast.makeText(getContext(), "Disconnected from "+mDevice.getName(), Toast.LENGTH_LONG).show();
-                mBluetoothConnection = new com.example.mdp26.BluetoothConnectionService(getActivity());
+                mBluetoothConnection = new BluetoothConnectionService(getActivity());
 //                mBluetoothConnection.startAcceptThread();
 
 
